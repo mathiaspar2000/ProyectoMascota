@@ -1,0 +1,112 @@
+﻿@page "/mascota"
+@page "/mascota/{idMascotaEditar:int}"
+
+@using BlazorCrud.Shared;
+@using BlazorCrud.Client.Service;
+
+@inject IMascotaService mascotaService;
+@inject ITipoService tipoService;
+@inject NavigationManager navegacion;
+
+<h3>titulo</h3>
+<EditForm Model = "mascota" OnValidSubmit="OnValidSubmit">
+    <DataAnnotationsValidator></DataAnnotationsValidator>
+
+    <div class="mb-3">
+        <label class="form-label">Nombre Mascota</label>
+        <InputText class="form-control" @bind-Value="mascota.NombreMascota"></InputText>
+        <ValidationMessage For="@(()=>mascota.NombreMascota)"></ValidationMessage>
+    </div>
+    
+    <div class="mb-3">
+        <label class="form-label">Nombre Dueño</label>
+        <InputText class="form-control" @bind-Value="mascota.NombreDueño"></InputText>
+        <ValidationMessage For="@(()=>mascota.NombreDueño)"></ValidationMessage>
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Tipo de mascota</label>
+        <InputSelect class="form-select" @bind-Value="mascota.IdTipo">
+            <option value="0">-- Seleccionar --</option>
+            @foreach(var item in listaTipo)
+            {
+                <option value="@item.IdTipo"> @item.TipoMascota</option>
+            }
+        </InputSelect>
+        <ValidationMessage For="@(()=>mascota.IdTipo)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Edad</label>
+        <InputNumber class="form-control"@bind-Value="mascota.Edad"></InputNumber>
+        <ValidationMessage For="@(()=>mascota.Edad)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Valor a pagar</label>
+        <InputNumber class="form-control" @bind-Value="mascota.ValorPagar"></InputNumber>
+        <ValidationMessage For="@(()=>mascota.ValorPagar)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha de ingreso</label>
+        <InputDate class="form-control"@bind-Value="mascota.FechaIngreso"></InputDate>
+        <ValidationMessage For="@(()=>mascota.FechaIngreso)"></ValidationMessage>
+    </div>
+    <div class="mb-3">
+        <label class="form-label">Fecha de salida</label>
+        <InputDate class="form-control" @bind-Value="mascota.FechaSalida"></InputDate>
+        <ValidationMessage For="@(()=>mascota.FechaSalida)"></ValidationMessage>
+    </div>
+
+    <button class="btn btn-primary" type="submit">
+        @btnTexto
+    </button>
+
+    <a class="btn btn-warning" href= "mascotas">Volver</a>
+</EditForm>
+
+@code {
+
+    [Parameter]
+    public int idMascotaEditar { get; set; } = 0;
+
+    string titulo = string.Empty;
+    string btnTexto = string.Empty;
+
+    MascotaDTO mascota = new MascotaDTO();
+    List<TipoDTO> listaTipo = new List<TipoDTO>();
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (idMascotaEditar != 0)
+        {
+            mascota = await mascotaService.Buscar(idMascotaEditar);
+            btnTexto = "Actualizar Mascota";
+            titulo = "Editar Mascota";
+        }
+        else
+        {
+            mascota.FechaIngreso = DateTime.Today;
+            mascota.FechaSalida = DateTime.Today;
+            btnTexto = "Guardar Mascota";
+            titulo = "Nueva Mascota";
+        }
+        listaTipo = await tipoService.Lista();
+    }
+
+    private async Task OnValidSubmit()
+    {
+        int idDevuelto = 0;
+        if (idMascotaEditar == 0)
+        {
+            idDevuelto = await mascotaService.Guardar(mascota);
+        }
+        else
+        {
+            idDevuelto = await mascotaService.Editar(mascota);
+
+            if (idDevuelto != 0)
+            {
+                navegacion.NavigateTo("/mascotas");
+            }
+        }
+    }
+}

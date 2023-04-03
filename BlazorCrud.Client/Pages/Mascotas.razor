@@ -1,0 +1,89 @@
+﻿@page "/mascotas"
+@using BlazorCrud.Shared;
+@using CurrieTechnologies.Razor.SweetAlert2;
+@using BlazorCrud.Client.Service;
+
+@inject SweetAlertService Swal;
+@inject IMascotaService mascotaService;
+
+<h3>Mascotas</h3>
+
+<a class="btn btn-success btn-sm mb-3" href="mascota">Nueva Mascota</a>
+
+<table class="table">
+    <thead>
+        <tr>
+            <th>NombreMascota</th>
+            <th>NombreDueño</th>
+            <th>Tipo</th>
+            <th>Edad</th>
+            <th>ValorPagar</th>
+            <th>FechaIngreso</th>
+            <th>FechaSalida</th>
+            <th></th>
+        </tr>
+    </thead>
+    <tbody>
+        @if (listaMascota == null)
+        {
+            <tr>
+                <td colspan="5" align="center">
+                    <img style="width:50px" scr="https://media.tenor.com/On7kvXhzml4AAAAj/loading-gif.gif" />
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var item in listaMascota)
+            {
+                <tr>
+                    <td>@item.NombreMascota</td>
+                    <td>@item.NombreDueño</td>
+                    <td>@item.Tipo!.TipoMascota</td>
+                    <td>@item.Edad</td>
+                    <td>@item.ValorPagar</td>
+                    <td>@item.FechaIngreso.ToString("dd/MM/yyyy")</td>
+                    <td>@item.FechaSalida.ToString("dd/MM/yyyy")</td>
+                    <td>
+                        <a class="btn btn-primary btn-sm" href="mascota/@item.IdMascota">
+                            <i class="oi oi-pencil"></i>
+                        </a>
+                        <button type="button" class="btn btn-danger btn-sm ms-2" @onclick="(()=>Eliminar(item.IdMascota))">
+                            <i class="oi oi-trash"></i>
+                        </button>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</table>
+
+@code {
+    List<MascotaDTO>? listaMascota = null;
+
+    protected override async Task OnInitializedAsync()
+    {
+        listaMascota = await mascotaService.Lista();
+    }
+
+    private async Task Eliminar(int id)
+    {
+        var resultado = await Swal.FireAsync(new SweetAlertOptions
+            {
+                Title = "Borrar Mascota",
+                Text = "Deseas borrar esta mascota",
+                Icon = SweetAlertIcon.Question,
+                ShowCancelButton = true
+            });
+
+        if (resultado.IsConfirmed)
+        {
+            var eliminado = await mascotaService.Eliminar(id);
+
+            if (eliminado)
+            {
+                listaMascota = listaMascota!.FindAll(e => e.IdMascota != id);
+            }
+        }
+    }
+}
